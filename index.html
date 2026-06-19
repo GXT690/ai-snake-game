@@ -143,11 +143,36 @@
         }
 
         #gameCanvas {
-            display: block;
+            display: none;
             margin: 0 auto;
             border-radius: 15px;
             background: #0d1117;
             box-shadow: inset 0 0 50px rgba(0,0,0,0.5);
+        }
+
+        #gameCanvas.active {
+            display: block;
+        }
+
+        .game-start-btn {
+            display: block;
+            width: 100%;
+            padding: 20px;
+            font-size: 24px;
+            font-weight: bold;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+            margin-bottom: 15px;
+        }
+
+        .game-start-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 30px rgba(102, 126, 234, 0.6);
         }
 
         .start-screen, .game-over-screen {
@@ -491,6 +516,7 @@
                     </div>
                 </div>
 
+                <button class="game-start-btn" onclick="startGameFromButton()">🎮 开始游戏</button>
                 <canvas id="gameCanvas" width="700" height="500"></canvas>
 
                 <div style="margin-top: 15px;">
@@ -654,7 +680,7 @@
         let foodEaten = 0;
         let startTime = Date.now();
         let level = 1;
-        let gameSpeed = 200;
+        let gameSpeed = 120;
 
         let skills = {
             speed: { cooldown: 0, maxCooldown: 10, active: false, duration: 5 },
@@ -704,7 +730,7 @@
                 this.color = color;
                 this.vx = (Math.random() - 0.5) * 8;
                 this.vy = (Math.random() - 0.5) * 8;
-                this.life = 30;
+                this.life = 15;
                 this.size = Math.random() * 4 + 2;
             }
 
@@ -716,7 +742,7 @@
 
             draw() {
                 ctx.fillStyle = this.color;
-                ctx.globalAlpha = this.life / 30;
+                ctx.globalAlpha = this.life / 15;
                 ctx.fillRect(this.x, this.y, this.size, this.size);
                 ctx.globalAlpha = 1;
             }
@@ -886,7 +912,7 @@
                     head.y = Math.max(0, Math.min(GRID_SIZE - 1, head.y));
                     skills.shield.active = false;
                     activeEffects = activeEffects.filter(e => e.name !== '护盾保护');
-                    for (let i = 0; i < 20; i++) {
+                    for (let i = 0; i < 30; i++) {
                         particles.push(new Particle(
                             head.x * CELL_SIZE + CELL_SIZE / 2,
                             head.y * CELL_SIZE + CELL_SIZE / 2,
@@ -903,7 +929,7 @@
                 if (skills.shield.active) {
                     skills.shield.active = false;
                     activeEffects = activeEffects.filter(e => e.name !== '护盾保护');
-                    for (let i = 0; i < 20; i++) {
+                    for (let i = 0; i < 30; i++) {
                         particles.push(new Particle(
                             head.x * CELL_SIZE + CELL_SIZE / 2,
                             head.y * CELL_SIZE + CELL_SIZE / 2,
@@ -970,7 +996,7 @@
                         }, 3000);
                     }
 
-                    for (let i = 0; i < 15; i++) {
+                    for (let i = 0; i < 25; i++) {
                         particles.push(new Particle(
                             f.x * CELL_SIZE + CELL_SIZE / 2,
                             f.y * CELL_SIZE + CELL_SIZE / 2,
@@ -1027,6 +1053,8 @@
         }
 
         function draw() {
+            if (gameState !== 'playing' && gameState !== 'gameover') return;
+
             ctx.fillStyle = '#0d1117';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -1164,14 +1192,23 @@
             gameLoop();
         }
 
+        function startGameFromButton() {
+            document.querySelector('.game-start-btn').style.display = 'none';
+            document.getElementById('gameCanvas').classList.add('active');
+            gameState = 'playing';
+            initGame();
+            gameLoop();
+        }
+
         function restartGame() {
             document.getElementById('gameOverScreen').style.display = 'none';
+            document.querySelector('.game-start-btn').style.display = 'block';
+            document.getElementById('gameCanvas').classList.remove('active');
             Object.keys(achievements).forEach(key => {
                 achievements[key] = false;
                 document.getElementById(key).classList.remove('unlocked');
             });
-            gameState = 'playing';
-            initGame();
+            gameState = 'ready';
         }
 
         function updateHighScoreList() {
@@ -1239,8 +1276,7 @@
             requestAnimationFrame(gameLoop);
         }
 
-        initGame();
-        draw();
+        gameState = 'ready';
         updateHighScoreList();
     </script>
 </body>
